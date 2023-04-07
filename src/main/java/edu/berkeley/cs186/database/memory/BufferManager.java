@@ -453,7 +453,7 @@ public class BufferManager implements AutoCloseable {
      * Fetches the specified page, with a loaded and pinned buffer frame.
      *
      * @param parentContext lock context of the **parent** of the page being fetched
-     * @param pageNum       page number]
+     * @param pageNum       page number
      * @return specified page
      */
     public Page fetchPage(LockContext parentContext, long pageNum) {

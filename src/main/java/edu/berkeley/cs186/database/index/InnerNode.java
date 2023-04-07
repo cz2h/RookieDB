@@ -81,8 +81,9 @@ class InnerNode extends BPlusNode {
     @Override
     public LeafNode get(DataBox key) {
         // TODO(proj2): implement
-
-        return null;
+        int entryLessOrEqual = InnerNode.numLessThanEqual(key, keys);
+        BPlusNode nextNode = getChild(entryLessOrEqual);
+        return nextNode.get(key);
     }
 
     // See BPlusNode.getLeftmostLeaf.
@@ -90,15 +91,62 @@ class InnerNode extends BPlusNode {
     public LeafNode getLeftmostLeaf() {
         assert(children.size() > 0);
         // TODO(proj2): implement
-
-        return null;
+        BPlusNode leftmostChild = getChild(0);
+        return leftmostChild.getLeftmostLeaf();
     }
 
     // See BPlusNode.put.
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
+        int entryLessOrEqual = InnerNode.numLessThanEqual(key, keys);
+        BPlusNode nextNode = getChild(entryLessOrEqual);
 
+        Optional<Pair<DataBox, Long>> res = nextNode.put(key, rid);
+
+        if(res.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Child is split, by assumption will not hit the same key
+        DataBox childSplitKey = res.get().getFirst();
+        Long childSplitPageNum = res.get().getSecond();
+        int i = 0;
+        while(i < keys.size() && keys.get(i).compareTo(childSplitKey) < 0) {
+            i ++;
+        }
+        keys.add(i, childSplitKey);
+        // Since the new page stores things >= than childSplitKey
+        children.add(i + 1, childSplitPageNum);
+
+        if(keys.size() > metadata.getOrder() * 2) {
+            // split internal page
+            int d = metadata.getOrder();
+            List<DataBox> secondHalfKeys = new ArrayList<>(d), firstHalfKeys = new ArrayList<>(d);
+            List<Long> firstHalfChildren = new ArrayList<>(d), secondHalfChildren = new ArrayList<>(d);
+            for(int j = 0; j < d; j ++) {
+                firstHalfKeys.add(keys.get(j));
+                firstHalfChildren.add(children.get(j));
+            }
+            firstHalfChildren.add(children.get(d));
+
+            for(int j = d + 1; j < keys.size() ; j ++) {
+                secondHalfKeys.add(keys.get(j));
+                secondHalfChildren.add(children.get(j));
+            }
+            secondHalfChildren.add(children.get(2 * d + 1));
+
+            DataBox splitKey = keys.get(d);
+            InnerNode newNode = new InnerNode(metadata, bufferManager, secondHalfKeys,
+                    secondHalfChildren, treeContext);
+            keys = firstHalfKeys;
+            children = firstHalfChildren;
+
+            sync();
+            return Optional.of(new Pair<>(splitKey, newNode.page.getPageNum()));
+        }
+
+        sync();
         return Optional.empty();
     }
 

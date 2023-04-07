@@ -33,7 +33,7 @@ public class Page {
     /**
      * Creates a page handle given another page handle
      *
-     * @param page page handle to copy
+     * @param page page haƒndle to copy
      */
     protected Page(Page page) {
         this.lockContext = page.lockContext;

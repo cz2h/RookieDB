@@ -485,4 +485,111 @@ public class TestBPlusTree {
         assertEquals(3, InnerNode.maxOrder(pageSizeInBytes, keySchema));
         assertEquals(3, BPlusTree.maxOrder(pageSizeInBytes, keySchema));
     }
+
+    @Test
+    @Category(PublicTests.class)
+    public void testPutWithOverflow() {
+        // This test will insert values one by one into your B+ tree implementation.
+        // We've provided a visualization of how your tree should be structured
+        // after each step.
+        BPlusTree tree = getBPlusTree(Type.intType(), 1);
+        assertEquals("()", tree.toSexp());
+
+        // (4)
+        tree.put(new IntDataBox(4), new RecordId(4, (short) 4));
+        assertEquals("((4 (4 4)))", tree.toSexp());
+
+        // (4 9)
+        tree.put(new IntDataBox(9), new RecordId(9, (short) 9));
+        assertEquals("((4 (4 4)) (9 (9 9)))", tree.toSexp());
+
+        //   (6)
+        //  /   \
+        // (4) (6 9)
+        tree.put(new IntDataBox(6), new RecordId(6, (short) 6));
+        String l = "((4 (4 4)))";
+        String r = "((6 (6 6)) (9 (9 9)))";
+        assertEquals(String.format("(%s 6 %s)", l, r), tree.toSexp());
+
+        //     (6)
+        //    /   \
+        // (2 4) (6 9)
+        tree.put(new IntDataBox(2), new RecordId(2, (short) 2));
+        l = "((2 (2 2)) (4 (4 4)))";
+        r = "((6 (6 6)) (9 (9 9)))";
+        assertEquals(String.format("(%s 6 %s)", l, r), tree.toSexp());
+
+        //      (6 7)
+        //     /  |  \
+        // (2 4) (6) (7 9)
+        tree.put(new IntDataBox(7), new RecordId(7, (short) 7));
+        l = "((2 (2 2)) (4 (4 4)))";
+        String m = "((6 (6 6)))";
+        r = "((7 (7 7)) (9 (9 9)))";
+        assertEquals(String.format("(%s 6 %s 7 %s)", l, m, r), tree.toSexp());
+
+        //         (7)
+        //        /   \
+        //     (6)     (8)
+        //    /   \   /   \
+        // (2 4) (6) (7) (8 9)
+        tree.put(new IntDataBox(8), new RecordId(8, (short) 8));
+        String ll = "((2 (2 2)) (4 (4 4)))";
+        String lr = "((6 (6 6)))";
+        String rl = "((7 (7 7)))";
+        String rr = "((8 (8 8)) (9 (9 9)))";
+        l = String.format("(%s 6 %s)", ll, lr);
+        r = String.format("(%s 8 %s)", rl, rr);
+        assertEquals(String.format("(%s 7 %s)", l, r), tree.toSexp());
+
+        //            (7)
+        //           /   \
+        //     (3 6)       (8)
+        //   /   |   \    /   \
+        // (2) (3 4) (6) (7) (8 9)
+        tree.put(new IntDataBox(3), new RecordId(3, (short) 3));
+        ll = "((2 (2 2)))";
+        String lm = "((3 (3 3)) (4 (4 4)))";
+        lr = "((6 (6 6)))";
+        rl = "((7 (7 7)))";
+        rr = "((8 (8 8)) (9 (9 9)))";
+        l = String.format("(%s 3 %s 6 %s)", ll, lm, lr);
+        r = String.format("(%s 8 %s)", rl, rr);
+        assertEquals(String.format("(%s 7 %s)", l, r), tree.toSexp());
+
+        //            (4 7)
+        //           /  |  \
+        //   (3)      (6)       (8)
+        //  /   \    /   \    /   \
+        // (2) (3) (4 5) (6) (7) (8 9)
+        tree.put(new IntDataBox(5), new RecordId(5, (short) 5));
+        ll = "((2 (2 2)))";
+        lr = "((3 (3 3)))";
+        String ml = "((4 (4 4)) (5 (5 5)))";
+        String mr = "((6 (6 6)))";
+        rl = "((7 (7 7)))";
+        rr = "((8 (8 8)) (9 (9 9)))";
+        l = String.format("(%s 3 %s)", ll, lr);
+        m = String.format("(%s 6 %s)", ml, mr);
+        r = String.format("(%s 8 %s)", rl, rr);
+        assertEquals(String.format("(%s 4 %s 7 %s)", l, m, r), tree.toSexp());
+
+        //            (4 7)
+        //           /  |  \
+        //    (3)      (6)       (8)
+        //   /   \    /   \    /   \
+        // (1 2) (3) (4 5) (6) (7) (8 9)
+        tree.put(new IntDataBox(1), new RecordId(1, (short) 1));
+        ll = "((1 (1 1)) (2 (2 2)))";
+        lr = "((3 (3 3)))";
+        ml = "((4 (4 4)) (5 (5 5)))";
+        mr = "((6 (6 6)))";
+        rl = "((7 (7 7)))";
+        rr = "((8 (8 8)) (9 (9 9)))";
+        l = String.format("(%s 3 %s)", ll, lr);
+        m = String.format("(%s 6 %s)", ml, mr);
+        r = String.format("(%s 8 %s)", rl, rr);
+        assertEquals(String.format("(%s 4 %s 7 %s)", l, m, r), tree.toSexp());
+    }
+
 }

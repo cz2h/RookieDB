@@ -11,6 +11,7 @@ import edu.berkeley.cs186.database.io.DiskSpaceManager;
 import edu.berkeley.cs186.database.memory.BufferManager;
 import edu.berkeley.cs186.database.table.RecordId;
 
+import javax.xml.crypto.Data;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -146,8 +147,9 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): implement
-
-        return Optional.empty();
+        // Binary search on largest key no greater than given key
+        LeafNode targetLeaf = root.get(key);
+        return targetLeaf.getKey(key);
     }
 
     /**
@@ -257,6 +259,21 @@ public class BPlusTree {
         // Note: You should NOT update the root variable directly.
         // Use the provided updateRoot() helper method to change
         // the tree's root if the old root splits.
+        Optional<Pair<DataBox, Long>> res = root.put(key, rid);
+
+        if(! res.isEmpty()) {
+            // root is split, want to create a new root.
+            List<DataBox> newRootKeys = new ArrayList<>();
+            List<Long> newRootChildren = new ArrayList<>();
+
+            DataBox splitKey = res.get().getFirst();
+            Long rightPageNum = res.get().getSecond();
+            newRootKeys.add(splitKey);
+            newRootChildren.add(root.getPage().getPageNum());
+            newRootChildren.add(rightPageNum);
+
+            updateRoot(new InnerNode(metadata, bufferManager, newRootKeys, newRootChildren, lockContext));
+        }
 
         return;
     }

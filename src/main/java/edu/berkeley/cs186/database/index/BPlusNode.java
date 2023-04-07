@@ -111,7 +111,7 @@ abstract class BPlusNode {
      *
      * When an inner node splits, the first d entries are kept in the left node
      * and the last d entries are moved to the right node. The middle entry is
-     * moved (not copied) up as the split key. For example, we would split the
+     * moved (not copied) up as theOp split key. For example, we would split the
      * following order 2 inner node
      *
      *   +---+---+---+---+

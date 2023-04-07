@@ -1,0 +1,10 @@
+#
+
+
+
+# Size of contents stored in per node object
+Leaf key:  Long = 8
+Leaf rid: Long + Short (Page num + Entry) = 8 + 2
+
+Inner key: Long = 8
+Inner cid: Long = 8 (Page num of child)
