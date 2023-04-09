@@ -169,6 +169,7 @@ class LeafNode extends BPlusNode {
         return this;
     }
 
+
     // See BPlusNode.put.
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
@@ -218,7 +219,32 @@ class LeafNode extends BPlusNode {
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor) {
         // TODO(proj2): implement
+        int d = metadata.getOrder();
 
+        while(data.hasNext()) {
+            Pair<DataBox, RecordId> cur = data.next();
+
+            if(keys.size() + 1 > (int)Math.ceil(d * 2 * fillFactor)) {
+                List<DataBox> splitNodeKeys = new ArrayList<>(d);
+                List<RecordId> splitNodeRids = new ArrayList<>(d);
+
+                splitNodeKeys.add(cur.getFirst());
+                splitNodeRids.add(cur.getSecond());
+
+                LeafNode newSplitNode = new LeafNode(metadata, bufferManager,
+                        splitNodeKeys, splitNodeRids, rightSibling, treeContext);
+
+                rightSibling = Optional.of(newSplitNode.getPage().getPageNum());
+
+                sync();
+                return Optional.of(new Pair<>(splitNodeKeys.get(0), newSplitNode.getPage().getPageNum()));
+            }
+
+            keys.add(cur.getFirst());
+            rids.add(cur.getSecond());
+        }
+
+        sync();
         return Optional.empty();
     }
 

@@ -120,7 +120,6 @@ class InnerNode extends BPlusNode {
         DataBox childSplitKey = res.get().getFirst();
         Long childSplitPageNum = res.get().getSecond();
 
-        // TODO: Seems to be wrong, following code
         keys.add(indexOfMatchChild, childSplitKey);
         children.add(indexOfMatchChild + 1, childSplitPageNum);
 
@@ -161,6 +160,44 @@ class InnerNode extends BPlusNode {
             float fillFactor) {
         // TODO(proj2): implement
 
+        while(data.hasNext()) {
+            BPlusNode rightMostChild = getChild(children.size() - 1);
+            Optional<Pair<DataBox, Long>> res = rightMostChild.bulkLoad(data, fillFactor);
+
+            if(res.isPresent()) {
+                keys.add(res.get().getFirst());
+                children.add(res.get().getSecond());
+
+                // Split if full
+                if(keys.size() > metadata.getOrder() * 2) {
+                    int d = metadata.getOrder();
+                    List<DataBox> secondHalfKeys = new ArrayList<>(d), firstHalfKeys = new ArrayList<>(d);
+                    List<Long> firstHalfChildren = new ArrayList<>(d), secondHalfChildren = new ArrayList<>(d);
+                    for(int j = 0; j < d; j ++) {
+                        firstHalfKeys.add(keys.get(j));
+                        firstHalfChildren.add(children.get(j));
+                    }
+                    firstHalfChildren.add(children.get(d));
+
+                    for(int j = d + 1; j < 2 * d + 1 ; j ++) {
+                        secondHalfKeys.add(keys.get(j));
+                        secondHalfChildren.add(children.get(j));
+                    }
+                    secondHalfChildren.add(children.get(2 * d + 1));
+
+                    DataBox splitKey = keys.get(d);
+                    InnerNode newNode = new InnerNode(metadata, bufferManager, secondHalfKeys,
+                            secondHalfChildren, treeContext);
+                    keys = firstHalfKeys;
+                    children = firstHalfChildren;
+
+                    sync();
+                    return Optional.of(new Pair<>(splitKey, newNode.page.getPageNum()));
+                }
+            }
+        }
+
+        sync();
         return Optional.empty();
     }
 
