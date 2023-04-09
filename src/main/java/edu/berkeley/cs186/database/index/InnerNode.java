@@ -86,6 +86,14 @@ class InnerNode extends BPlusNode {
         return nextNode.get(key);
     }
 
+    @Override
+    public Optional<LeafNode> getGreaterEqual(DataBox key) {
+        int entryLessOrEqual = InnerNode.numLessThanEqual(key, keys);
+        BPlusNode nextNode = getChild(entryLessOrEqual);
+
+        return nextNode.getGreaterEqual(key);
+    }
+
     // See BPlusNode.getLeftmostLeaf.
     @Override
     public LeafNode getLeftmostLeaf() {
@@ -99,8 +107,8 @@ class InnerNode extends BPlusNode {
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
-        int entryLessOrEqual = InnerNode.numLessThanEqual(key, keys);
-        BPlusNode nextNode = getChild(entryLessOrEqual);
+        int indexOfMatchChild = InnerNode.numLessThanEqual(key, keys);
+        BPlusNode nextNode = getChild(indexOfMatchChild);
 
         Optional<Pair<DataBox, Long>> res = nextNode.put(key, rid);
 
@@ -111,16 +119,13 @@ class InnerNode extends BPlusNode {
         // Child is split, by assumption will not hit the same key
         DataBox childSplitKey = res.get().getFirst();
         Long childSplitPageNum = res.get().getSecond();
-        int i = 0;
-        while(i < keys.size() && keys.get(i).compareTo(childSplitKey) < 0) {
-            i ++;
-        }
-        keys.add(i, childSplitKey);
-        // Since the new page stores things >= than childSplitKey
-        children.add(i + 1, childSplitPageNum);
 
+        // TODO: Seems to be wrong, following code
+        keys.add(indexOfMatchChild, childSplitKey);
+        children.add(indexOfMatchChild + 1, childSplitPageNum);
+
+        // Split if necessary
         if(keys.size() > metadata.getOrder() * 2) {
-            // split internal page
             int d = metadata.getOrder();
             List<DataBox> secondHalfKeys = new ArrayList<>(d), firstHalfKeys = new ArrayList<>(d);
             List<Long> firstHalfChildren = new ArrayList<>(d), secondHalfChildren = new ArrayList<>(d);
@@ -130,7 +135,7 @@ class InnerNode extends BPlusNode {
             }
             firstHalfChildren.add(children.get(d));
 
-            for(int j = d + 1; j < keys.size() ; j ++) {
+            for(int j = d + 1; j < 2 * d + 1 ; j ++) {
                 secondHalfKeys.add(keys.get(j));
                 secondHalfChildren.add(children.get(j));
             }

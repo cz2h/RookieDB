@@ -204,8 +204,8 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        LeafNode leftMostLeaf = root.getLeftmostLeaf();
+        return new BPlusTreeIterator(leftMostLeaf, leftMostLeaf.scanAll());
     }
 
     /**
@@ -237,8 +237,11 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
+        // Should complete by finding to the target leaf directly
+        Optional<LeafNode> leafNode = root.getGreaterEqual(key);
+        if(leafNode.isEmpty()) return Collections.emptyIterator();
 
-        return Collections.emptyIterator();
+        return new BPlusTreeIterator(leafNode.get(), leafNode.get().scanGreaterEqual(key));
     }
 
     /**
@@ -440,19 +443,36 @@ public class BPlusTree {
     // Iterator ////////////////////////////////////////////////////////////////
     private class BPlusTreeIterator implements Iterator<RecordId> {
         // TODO(proj2): Add whatever fields and constructors you want here.
+        LeafNode node;
+        Iterator<RecordId> iterator;
+
+
+
+        public BPlusTreeIterator(LeafNode node, Iterator<RecordId> iterator) {
+            this.node = node;
+            this.iterator = iterator;
+        }
 
         @Override
         public boolean hasNext() {
             // TODO(proj2): implement
-
-            return false;
+            if(! iterator.hasNext()) {
+                Optional<LeafNode> rightSiblingNode = node.getRightSibling();
+                rightSiblingNode.ifPresent(this::updateBPlusIterator);
+            }
+            return iterator.hasNext();
         }
 
         @Override
         public RecordId next() {
             // TODO(proj2): implement
+            if(! hasNext()) throw new NoSuchElementException("No more record available.");
+            return iterator.next();
+        }
 
-            throw new NoSuchElementException();
+        private void updateBPlusIterator(LeafNode newNode) {
+            this.node = newNode;
+            this.iterator = newNode.getRids().iterator();
         }
     }
 }

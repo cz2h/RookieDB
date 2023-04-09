@@ -147,8 +147,17 @@ class LeafNode extends BPlusNode {
     @Override
     public LeafNode get(DataBox key) {
         // TODO(proj2): implement
-
         return this;
+    }
+
+    @Override
+    public Optional<LeafNode> getGreaterEqual(DataBox key) {
+        if(keys.get(keys.size() - 1).compareTo(key) < 0) {
+            if(rightSibling.isEmpty()) return Optional.empty();
+            return getRightSibling().get().getGreaterEqual(key);
+        }
+
+        return Optional.of(this);
     }
 
     // See BPlusNode.getLeftmostLeaf.
@@ -180,7 +189,7 @@ class LeafNode extends BPlusNode {
 
             List<DataBox> splitNodekeys = new ArrayList<>(d);
             List<RecordId> splitNoderids = new ArrayList<>(d);
-            for(int j = d; j < keys.size(); j ++) {
+            for(int j = d; j < 2 * d + 1; j ++) {
                 splitNodekeys.add(keys.get(j));
                 splitNoderids.add(rids.get(j));
             }

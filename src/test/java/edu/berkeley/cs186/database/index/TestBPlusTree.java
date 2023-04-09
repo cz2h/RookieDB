@@ -452,7 +452,8 @@ public class TestBPlusTree {
                 for (int i = 0; i < keys.size(); i += 100) {
                     final int j = i;
                     List<RecordId> expected = sortedRids.subList(i, sortedRids.size());
-                    assertEquals(expected, indexIteratorToList(() -> tree.scanGreaterEqual(new IntDataBox(j))));
+                    List<RecordId> actual = indexIteratorToList(() -> tree.scanGreaterEqual(new IntDataBox(j)));
+                    assertEquals(expected, actual);
                 }
 
                 // Load the tree from disk.
