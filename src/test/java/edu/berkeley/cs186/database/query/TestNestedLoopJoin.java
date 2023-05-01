@@ -337,6 +337,17 @@ public class TestNestedLoopJoin {
         // 1 | x   | x   |
         //   +-----+-----+
         //     1 2 | 1 2
+        // Order is
+        //   +-----------+
+        // 1 | 6   | 8   |
+        // 2 |   5 |   7 |
+        // --+-----+-----+
+        // 2 |   2 |   4 |
+        // 1 | 1   | 3   |
+        //   +-----+-----+
+        //     1 2 | 1 2
+
+
         try(Transaction transaction = d.beginTransaction()) {
             // This whole section is just to generate the tables described above
             Record r1 = TestUtils.createRecordWithAllTypesWithValue(1);
@@ -383,23 +394,32 @@ public class TestNestedLoopJoin {
             checkIOs(2);
 
             int count = 0;
+            //   +-----------+
+            // 1 | x   | x   |
+            // 2 |   x |   x |
+            // --+-----+-----+
+            // 2 |   x |   x |
+            // 1 | x   | x   |
+            //   +-----+-----+
+            //     1 2 | 1 2
+
             while (outputIterator.hasNext() && count < 400 * 400 * 2) {
                 if (count < 200 * 200) {
-                    assertEquals("mismatch at record " + count, expectedRecord1, outputIterator.next());
+                    assertEquals("1 mismatch at record " + count, expectedRecord1, outputIterator.next());
                 } else if (count < 200 * 200 * 2) {
-                    assertEquals("mismatch at record " + count, expectedRecord2, outputIterator.next());
+                    assertEquals("2 mismatch at record " + count, expectedRecord2, outputIterator.next());
                 } else if (count < 200 * 200 * 3) {
-                    assertEquals("mismatch at record " + count, expectedRecord1, outputIterator.next());
+                    assertEquals("3 mismatch at record " + count, expectedRecord1, outputIterator.next());
                 } else if (count < 200 * 200 * 4) {
-                    assertEquals("mismatch at record " + count, expectedRecord2, outputIterator.next());
+                    assertEquals("4 mismatch at record " + count, expectedRecord2, outputIterator.next());
                 } else if (count < 200 * 200 * 5) {
-                    assertEquals("mismatch at record " + count, expectedRecord2, outputIterator.next());
+                    assertEquals("5 mismatch at record " + count, expectedRecord2, outputIterator.next());
                 } else if (count < 200 * 200 * 6) {
-                    assertEquals("mismatch at record " + count, expectedRecord1, outputIterator.next());
+                    assertEquals("6 mismatch at record " + count, expectedRecord1, outputIterator.next());
                 } else if (count < 200 * 200 * 7) {
-                    assertEquals("mismatch at record " + count, expectedRecord2, outputIterator.next());
+                    assertEquals("7 mismatch at record " + count, expectedRecord2, outputIterator.next());
                 } else {
-                    assertEquals("mismatch at record " + count, expectedRecord1, outputIterator.next());
+                    assertEquals("8 mismatch at record " + count, expectedRecord1, outputIterator.next());
                 }
                 count++;
 

@@ -1,0 +1,10 @@
+# Time Consuming Steps:
+1. BNLJ:
+    1.1 Forgot to set the markNext for backTrackIterator
+    1.2 Need to have a way to reset pointers like leftRecord when calling reset.
+
+# Challenges:
+1. BNLJ:
+    1.1 Write nested loop into hasNext() design in a pretty way
+
+#
