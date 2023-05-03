@@ -2,9 +2,13 @@
 1. BNLJ:
     1.1 Forgot to set the markNext for backTrackIterator
     1.2 Need to have a way to reset pointers like leftRecord when calling reset.
+2. GHJ:
 
 # Challenges:
 1. BNLJ:
     1.1 Write nested loop into hasNext() design in a pretty way
+2. GHJ:
+    1.1 Prevent over partitioning when build and prob. Discard left/right, whoever fits into buffer should be used to
+    build the maps
 
 #
