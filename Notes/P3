@@ -3,6 +3,9 @@
     1.1 Forgot to set the markNext for backTrackIterator
     1.2 Need to have a way to reset pointers like leftRecord when calling reset.
 2. GHJ:
+3. Sort:
+    3.1 Understand the size of different input. Simple sort requires our input <= #page * pagesize. But for merge
+    sort, since we are using buffers as input buffers, we do not necessary limit input size.s
 
 # Challenges:
 1. BNLJ:
