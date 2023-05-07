@@ -6,6 +6,9 @@
 3. Sort:
     3.1 Understand the size of different input. Simple sort requires our input <= #page * pagesize. But for merge
     sort, since we are using buffers as input buffers, we do not necessary limit input size.s
+4. minCostJoins:
+    Always have prevSet on leftCol (as the deeper one)
+
 
 # Challenges:
 1. BNLJ:

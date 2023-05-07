@@ -1,0 +1,30 @@
+# Goal of this project:
+Implement different join algorithms, including hash join, block join.
+Implement query plans to optimize join. Including finding the lowest estimated cost plans for accessing each table,
+optimal plans for joining together all possible sets of i - 1 tables.
+
+# JOIN:
+1. Loop Join
+- SimpleNestedJoin:
+Nested join.
+
+- BlockNestedJoin:
+Make use of buffer size in memory. Each time load B - 2 pages from left, 1 page from right for join.
+
+2. Hash Join
+- SimpleHashJoin:
+Create partitions using hashing algorithm on left, then join the partitions with the right table
+
+- GraceHashJoin:
+Repeatively create partitions using different hash algorithms until partition is of size <= 1 page, then do the join
+
+3. External Sort:
+- Sort:
+For a given source, first partition it into different runs (where each run of size B), then sort each run.
+Repeatively merge every B - 1 runs until there is only 1 run left and we get a sorted list of records.
+
+- Sort Merge Join:
+For two given source, first sort both of them. Then merge them into 1 output (no trick for this step at all).
+
+s
+# QUERY_OPTIMIZATION

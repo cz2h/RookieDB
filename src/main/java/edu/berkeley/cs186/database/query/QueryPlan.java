@@ -577,6 +577,20 @@ public class QueryPlan {
         QueryOperator minOp = new SequentialScanOperator(this.transaction, table);
 
         // TODO(proj3_part2): implement
+        // List of columns index that used by a select predicate for this table
+        List<Integer> eligibleIndexColumns = getEligibleIndexColumns(table);
+        int minIndex = -1;
+
+        for(Integer index : eligibleIndexColumns) {
+            SelectPredicate p = this.selectPredicates.get(index);
+            QueryOperator cur = new IndexScanOperator(this.transaction, table, p.column, p.operator, p.value);
+            if(cur.estimateIOCost() < minOp.estimateIOCost()) {
+                minOp = cur;
+                minIndex = index;
+            }
+        }
+
+        minOp = addEligibleSelections(minOp, minIndex);
         return minOp;
     }
 
@@ -646,10 +660,50 @@ public class QueryPlan {
         //      calculate the cheapest join with the new table (the one you
         //      fetched an operator for from pass1Map) and the previously joined
         //      tables. Then, update the result map if needed.
+
+        for(Set<String> prevSet : prevMap.keySet()) {
+            for(JoinPredicate p : this.joinPredicates) {
+                QueryOperator leftOp = null;
+                QueryOperator rightOp = null;
+                QueryOperator minOp = null;
+                Set<String> minSet = new HashSet<>();
+
+                String leftTable = p.leftTable;
+                String rightTable = p.rightTable;
+                String leftCol = p.leftColumn;
+                String rightCol = p.rightColumn;
+
+                if(prevSet.contains(leftTable) && ! prevSet.contains(rightTable)) {
+                    minSet.addAll(prevSet);
+                    minSet.add(rightTable);
+                    minOp = minCostJoinType(prevMap.get(prevSet), find1PassOp(pass1Map, rightTable), leftCol, rightCol);
+                } else if(prevSet.contains(rightTable) && !prevSet.contains(leftTable)) {
+                    // l: leftTable
+                    // r: prevSet
+                    minSet.add(leftTable);
+                    minSet.addAll(prevSet);
+                    minOp = minCostJoinType(prevMap.get(prevSet), find1PassOp(pass1Map, leftTable), rightCol, leftCol);
+                } else {
+                    continue;
+                }
+
+                if(! result.containsKey(minSet) || result.get(minSet).estimateIOCost() > minOp.estimateIOCost()) {
+                    result.put(minSet, minOp);
+                }
+            }
+        }
+
         return result;
     }
 
+
+
     // Task 7: Optimal Plan Selection //////////////////////////////////////////
+
+    private QueryOperator find1PassOp(Map<Set<String>, QueryOperator> pass1Map, String t) {
+        Set<String> tSet = Collections.singleton(t);
+        return pass1Map.get(tSet);
+    }
 
     /**
      * Finds the lowest cost QueryOperator in the given mapping. A mapping is
@@ -691,11 +745,26 @@ public class QueryPlan {
         // Pass i: On each pass, use the results from the previous pass to find
         // the lowest cost joins with each table from pass 1. Repeat until all
         // tables have been joined.
-        //
+        Map<Set<String>, QueryOperator> pass1Map = new HashMap<>();
+        for(String table : this.tableNames) {
+            pass1Map.put(Collections.singleton(table), minCostSingleAccess(table));
+        }
+
         // Set the final operator to the lowest cost operator from the last
         // pass, add group by, project, sort and limit operators, and return an
         // iterator over the final operator.
-        return this.executeNaive(); // TODO(proj3_part2): Replace this!
+        Map<Set<String>, QueryOperator> prevMap = pass1Map;
+        while(prevMap.size() > 1) {
+            prevMap = minCostJoins(prevMap, pass1Map);
+        }
+        this.finalOperator = prevMap.values().iterator().next();
+
+        this.addGroupBy();
+        this.addProject();
+        this.addSort();
+        this.addLimit();
+//        return this.executeNaive(); // TODO(proj3_part2): Replace this!
+        return this.finalOperator.iterator();
     }
 
     // EXECUTE NAIVE ///////////////////////////////////////////////////////////

@@ -137,7 +137,6 @@ public class TestOptimizationJoins {
             QueryOperator op23 = pass2Map.get(set23);
             assertTrue(op23 instanceof  BNLJOperator);
             assertEquals(18, op23.estimateIOCost());
-
             // Runs another pass
             Map<Set<String>, QueryOperator> pass3Map = query.minCostJoins(pass2Map, pass1Map);
             assertEquals(1, pass3Map.size());
